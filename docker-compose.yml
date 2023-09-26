@@ -1,0 +1,37 @@
+version: "3.4"
+services:
+  web:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    volumes:
+      - .:/app
+    ports:
+      - "0.0.0.0:8081:8081"
+    depends_on:
+      - "worker"
+    command: bash -c "python -u -m flask run --host=0.0.0.0 --port=8081"
+    environment:
+      - FLASK_APP=main
+      - FLASK_DEBUG=1
+      - FLASK_ENV= "development"
+
+
+
+  redis:
+    image: "redis:6.0.5-buster"
+    volumes:
+      - "redis:/data"
+
+  worker:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    volumes:
+      - .:/app
+    command: celery -A main.celery_app worker -l info
+    depends_on:
+      - "redis"
+
+volumes:
+  redis: {}
